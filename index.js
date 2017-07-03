@@ -28,26 +28,10 @@ csv({ noheader: true, headers: names })
         data.push(jsonObj); //push each object to data Array
     })
     .on('done', (error) => {
-        seperationSize = 0.8 * data.length;
+        seperationSize = 0.7 * data.length;
         data = shuffleArray(data);
         dressData();
     });
-
-/**
- * Randomize array element order in-place.
- * https://stackoverflow.com/a/12646864
- * Using Durstenfeld shuffle algorithm.
- */
-
-function shuffleArray(array) {
-    for (var i = array.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var temp = array[i];
-        array[i] = array[j];
-        array[j] = temp;
-    }
-    return array;
-}
 
 function dressData() {
     /**
@@ -112,4 +96,34 @@ function error(predicted, expected) {
         }
     }
     return misclassifications;
+}
+
+function predict() {
+    let temp = [];
+    prompt.start();
+
+    prompt.get(['Sepal Length', 'Sepal Width', 'Petal Length', 'Petal Width'], function(err, result) {
+        if (!err) {
+            for (var key in result) {
+                temp.push(parseFloat(result[key]));
+            }
+            console.log(`with ${temp} -- type = ${knn.getSinglePrediction(temp)}`);
+        }
+    });
+}
+
+/**
+ * Randomize array element order in-place.
+ * https://stackoverflow.com/a/12646864
+ * Using Durstenfeld shuffle algorithm.
+ */
+
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
 }
