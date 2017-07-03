@@ -1,64 +1,129 @@
-const ml = require('ml-regression');
+const KNN = require('ml-knn');
 const csv = require('csvtojson');
-const SLR = ml.SLR; // Simple Linear Regression
+const prompt = require('prompt');
+const knn = new KNN();
 
-const csvFilePath = 'advertising.csv' //data source
-let csvData = [], //parsed Data
-    X = [], //Input
-    y = []; //Output
+const csvFilePath = 'irisData.csv'; //Data 
+const names = ['sepalLength',
+    'sepalWidth',
+    'petalLength',
+    'petalWidth',
+    'type'
+]; //For header
 
-let regressionModel;
+let seperationSize; //To seperate the training and test data
 
-const readline = require('readline'); // For user prompt to allow predictions
+let data = [],
+    X = [],
+    y = [];
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
+let trainingSetX = [],
+    trainingSety = [],
+    testSetX = [],
+    testSetY = [];
 
-csv()
+csv({ noheader: true, headers: names })
     .fromFile(csvFilePath)
     .on('json', (jsonObj) => {
-        csvData.push(jsonObj);
+        data.push(jsonObj); //push each object to data Array
     })
-    .on('done', () => {
-        dressData(); // To get data points from Json Objects
-        performRegression();
+    .on('done', (error) => {
+        seperationSize = 0.7 * data.length;
+        data = shuffleArray(data);
+        dressData();
     });
 
 function dressData() {
     /**
-     * One row of the data object looks like:
-     * {
-     *   TV: "10",
-     *   Radio: "100",
-     *   Newspaper: "20",
-     *   "Sales": "1000"
-     * }
+     * There are three different types of Iris flowers
+     * that this dataset classifies.
      *
-     * So while adding the data points,
-     * we need to parse the String value as a Float.
+     * 1. Iris Setosa 
+     * 2. Iris Versicolor 
+     * 3. Iris Virginica 
+     *
+     * We are going to change these classes from Strings to numbers.
+     * Such that, a value of type equal to
+     * 0 would mean setosa,
+     * 1 would mean versicolor, and
+     * 3 would mean virginica
      */
 
-    csvData.forEach((row) => {
-        X.push(f(row.TV));
-        y.push(f(row.Sales));
+    let types = new Set(); //To gather Unique classes
+
+    data.forEach((row) => {
+        types.add(row.type);
+    });
+
+    typesArray = [...types]; // To save the different types of classes
+
+    data.forEach((row) => {
+        let rowArray, typeNumber;
+
+        rowArray = Object.keys(row).map(key => parseFloat(row[key])).slice(0, 4);
+        typeNumber = typesArray.indexOf(row.type); //convert type(string) to type(number)
+
+        X.push(rowArray);
+        y.push(typeNumber);
+    });
+
+    trainingSetX = X.slice(0, seperationSize);
+    trainingSetY = y.slice(0, seperationSize);
+    testSetX = X.slice(seperationSize);
+    testSetY = y.slice(seperationSize);
+
+    train();
+}
+
+function train() {
+    knn.train(trainingSetX, trainingSetY, { k: 7 });
+    test();
+}
+
+function test() {
+    const result = knn.predict(testSetX);
+    const testSetLength = testSetX.length;
+    const predictionError = error(result, testSetY);
+    console.log(`Test Set Size = ${testSetLength} and number of Misclass = ${predictionError}`);
+    predict();
+}
+
+function error(predicted, expected) {
+    let misclassifications = 0;
+    for (var index = 0; index < predicted.length; index++) {
+        if (predicted[index] !== expected[index]) {
+            misclassifications++;
+        }
+    }
+    return misclassifications;
+}
+
+function predict() {
+    let temp = [];
+    prompt.start();
+
+    prompt.get(['Sepal Length', 'Sepal Width', 'Petal Length', 'Petal Width'], function(err, result) {
+        if (!err) {
+            for (var key in result) {
+                temp.push(parseFloat(result[key]));
+            }
+            console.log(`with ${temp} -- type = ${knn.getSinglePrediction(temp)}`);
+        }
     });
 }
 
-function f(s) {
-    return parseFloat(s);
-}
+/**
+ * Randomize array element order in-place.
+ * https://stackoverflow.com/a/12646864
+ * Using Durstenfeld shuffle algorithm.
+ */
 
-function performRegression() {
-    regressionModel = new SLR(X, y); //Train the model on training data
-    console.log(regressionModel.toString(3));
-    predictOutput();
-}
-
-function predictOutput() {
-    rl.question('Enter input X for prediction: ', (answer) => {
-        console.log(`At X = ${answer}, y = ${regressionModel.predict(parseFloat(answer))}`);
-        predictOutput();
-    });
+function shuffleArray(array) {
+    for (var i = array.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = array[i];
+        array[i] = array[j];
+        array[j] = temp;
+    }
+    return array;
 }
