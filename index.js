@@ -3,14 +3,38 @@ const csv = require('csvtojson');
 const prompt = require('prompt');
 const knn = new KNN();
 
-const csvFilePath = 'irisData.csv'; //Data 
-const names = ['sepalLength',
-    'sepalWidth',
-    'petalLength',
-    'petalWidth',
-    'type'
+const csvFilePath = 'heartDiseaseData.csv'; //Data 
+const names = ['Age',
+    'Sex',
+    'Chest Pain',
+    'Blood Pressure',
+    'Cholestral Level',
+    'Blood Sugar Level',
+    'Rest ECG results',
+    'Maximum Heart Rate',
+    'Exercise Angina Achieved?',
+    'Old Peak',
+    'Slope of Exercise',
+    'Blood Vessels Colored',
+    'Thalamus condition',
+    'Heart Disease Diagnosis'
+
 ]; //For header
 
+// Age in years
+// Sex - Male = 1, Female = 0
+// Chest Pain - 1 = typical angina, 2 = atypical angina, 3 = non-anginal pain, 4 = asymptomatic 
+// Blood Pressure (mm/HG)
+// Cholestral Level, (mg/dl)
+// Fasting Blood Sugar > 120 - True = 1, False = 0
+// Rest ECG results - 0 = Normal, 1 = some abnormality, 2 = definite ventricle hypertrophy
+// Max Heart Rate achieved
+// Exercise Angina Achieved? 1 = Yes, 2 = No
+// ST depression induced by exercise relative to rest
+// the slope of the peak exercise ST segment - 1 = upslope, 2 = flat, 3 = downslope
+// ca: number of major vessels (0-3) colored by flourosopy 
+// Thalamus Condition. 3 = normal; 6 = fixed defect; 7 = reversable defect
+// Diagnosis of Heart Disease "0" is almost no chance. '1" < 25%, "2" 25-50%, "3" 50-75%, "4" > 75%
 let seperationSize; //To seperate the training and test data
 
 let data = [],
@@ -60,7 +84,7 @@ function dressData() {
     data.forEach((row) => {
         let rowArray, typeNumber;
 
-        rowArray = Object.keys(row).map(key => parseFloat(row[key])).slice(0, 4);
+        rowArray = Object.keys(row).map(key => parseFloat(row[key]));
         typeNumber = typesArray.indexOf(row.type); //convert type(string) to type(number)
 
         X.push(rowArray);
@@ -102,14 +126,29 @@ function predict() {
     let temp = [];
     prompt.start();
 
-    prompt.get(['Sepal Length', 'Sepal Width', 'Petal Length', 'Petal Width'], function(err, result) {
-        if (!err) {
-            for (var key in result) {
-                temp.push(parseFloat(result[key]));
+    prompt.get(['Age',
+            'Sex',
+            'Chest Pain',
+            'Blood Pressure',
+            'Cholestral Level',
+            'Blood Sugar Level',
+            'Rest ECG results',
+            'Maximum Heart Rate',
+            'Exercise Angina Achieved?',
+            'Old Peak',
+            'Slope of Exercise',
+            'Blood Vessels Colored',
+            'Thalamus condition'
+        ],
+        function(err, result) {
+            if (!err) {
+                for (var key in result) {
+                    temp.push(parseFloat(result[key]));
+                }
+                console.log(`with those answers, your chance of heart disease on the scale of 0-4 is ${knn.getSinglePrediction(temp)}`)
+                console.log("0 equal to less than 1%, 1 equal to less than 25%, 2 is between 25-50%, 3 is between 50-75% and 4 is over 75%");
             }
-            console.log(`with ${temp} -- type = ${knn.getSinglePrediction(temp)}`);
-        }
-    });
+        });
 }
 
 /**

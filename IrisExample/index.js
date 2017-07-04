@@ -3,7 +3,7 @@ const csv = require('csvtojson');
 const prompt = require('prompt');
 const knn = new KNN();
 
-const csvFilePath = 'heartDiseaseData.csv'; //Data 
+const csvFilePath = 'irisData.csv'; //Data 
 const names = ['sepalLength',
     'sepalWidth',
     'petalLength',
